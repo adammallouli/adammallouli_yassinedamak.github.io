@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Developer's Journey</title>
+<style>
+body{
+ margin:0;
+ font-family: Arial, sans-serif;
+ color:#fff;
+ overflow-x:hidden;
+ background: radial-gradient(circle at 20% 20%, #1b2a4a, transparent 40%),
+             radial-gradient(circle at 80% 30%, #3b1b4a, transparent 45%),
+             radial-gradient(circle at 50% 80%, #0b3b2e, transparent 50%),
+             #07070d;
+}
+
+h1{
+ text-align:center;
+ padding:18px;
+ letter-spacing:1px;
+}
+
+#menu{
+ display:flex;
+ flex-direction:column;
+ height:85vh;
+ padding:12px;
+ gap:12px;
+}
+
+.menuBtn{
+ flex:1;
+ font-size:22px;
+ border:none;
+ cursor:pointer;
+ color:white;
+ border-radius:18px;
+ background: rgba(255,255,255,0.08);
+ backdrop-filter: blur(10px);
+ transition:0.2s;
+}
+
+.menuBtn:hover{
+ transform:scale(1.02);
+ background: rgba(255,255,255,0.15);
+}
+
+.screen{display:none;}
+
+#content{
+ max-width:900px;
+ margin:auto;
+ padding:30px;
+ font-size:19px;
+ line-height:1.9;
+ text-align:center;
+ white-space:pre-line;
+}
+
+button.small{
+ margin:10px;
+ padding:10px 16px;
+ font-size:14px;
+ cursor:pointer;
+ border-radius:10px;
+ border:none;
+ background:#2a2f4a;
+ color:white;
+}
+
+#gameContainer{
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ margin-top:10px;
+ gap:10px;
+}
+
+#gameCanvas{
+ border:3px solid white;
+ width:400px;
+ height:400px;
+ display:block;
+ background:black;
+}
+
+#setup{
+ text-align:center;
+ margin-top:10px;
+}
+
+.videoBox{
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ margin-top:20px;
+}
+
+.videoBox video{
+ width:85%;
+ max-width:750px;
+ border:4px solid rgba(255,255,255,0.7);
+ border-radius:16px;
+ box-shadow:0 0 25px rgba(0,0,0,0.6);
+}
+</style>
+</head>
+<body>
+
+<h1>Presented by Yassine Damak and Adam Mallouli<br>Game Developer's Journey</h1>
+
+<div id="menu">
+<button class="menuBtn" onclick="openStory()">Why Game Development?</button>
+<button class="menuBtn" onclick="openPath()">Developer Journey & Roles</button>
+<h3 style="text-align:center;">🎮 Snake Game</h3>
+</div>
+
+<div id="story" class="screen">
+<div id="content"></div>
+<button class="small" onclick="goMenu()">Return</button>
+</div>
+
+<div id="gameContainer">
+<canvas id="gameCanvas" width="600" height="600"></canvas>
+
+<div id="setup">
+<h3>Customize Your Game</h3>
+Snake Color <input type="color" id="snakeColor" value="#00ff00"><br>
+Background Color <input type="color" id="bgColor" value="#000000"><br>
+Food Color <input type="color" id="foodColor" value="#ff0000"><br>
+Speed <select id="speed"><option value="120">Slow</option><option value="80">Normal</option><option value="50">Fast</option></select><br>
+Grid Size <select id="grid"><option value="20">Small</option><option value="25">Medium</option><option value="30">Large</option></select><br>
+<button class="small" onclick="startGame()">Start Game</button>
+<button class="small" onclick="toggleFullScreen()">Fullscreen</button>
+</div>
+</div>
+
+<script>
+let canvas=document.getElementById('gameCanvas');
+let ctx=canvas.getContext('2d');
+
+let snake,dx,dy,food,size,interval,running=false;
+let snakeColor,bgColor,foodColor;
+
+function goMenu(){
+ document.getElementById('story').style.display='none';
+ document.getElementById('menu').style.display='flex';
+}
+
+function openStory(){
+ document.getElementById('menu').style.display='none';
+ document.getElementById('story').style.display='block';
+
+ document.getElementById('content').innerHTML = `
+ <div class="videoBox">
+  <iframe 
+     src="https://drive.google.com/file/d/1oWYUPjJRu1wZazLyywS4_fld8dGTX9mw/preview"
+     width="85%" 
+     height="450"
+     allow="autoplay"
+     allowfullscreen>
+   </iframe>
+ </div>
+ `;
+}
+
+function openPath(){
+ document.getElementById('menu').style.display='none';
+ document.getElementById('story').style.display='block';
+
+ document.getElementById('content').innerHTML = `
+ <div class="videoBox">
+   <iframe 
+     src="https://drive.google.com/file/d/1G2qPLXLicWaepGRFXkAGOddlc033jmeA/preview"
+     width="85%" 
+     height="450"
+     allow="autoplay"
+     allowfullscreen>
+   </iframe>
+ </div>
+ `;
+}
+function startGame(){
+ snakeColor=document.getElementById('snakeColor').value;
+ bgColor=document.getElementById('bgColor').value;
+ foodColor=document.getElementById('foodColor').value;
+ size=parseInt(document.getElementById('grid').value);
+ let speed=parseInt(document.getElementById('speed').value);
+
+ let cells=Math.floor(canvas.width/size);
+ snake=[{x:Math.floor(cells/2)*size,y:Math.floor(cells/2)*size}];
+ dx=size; dy=0;
+ food=randomFood(cells);
+ running=true;
+
+ clearInterval(interval);
+ interval=setInterval(draw,speed);
+}
+
+function randomFood(cells){
+ return {
+  x:Math.floor(Math.random()*cells)*size,
+  y:Math.floor(Math.random()*cells)*size
+ };
+}
+
+document.addEventListener('keydown',function(e){
+ if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){
+  e.preventDefault();
+ }
+
+ if(!running)return;
+ if(e.key==='ArrowUp'&&dy===0){dx=0;dy=-size}
+ if(e.key==='ArrowDown'&&dy===0){dx=0;dy=size}
+ if(e.key==='ArrowLeft'&&dx===0){dx=-size;dy=0}
+ if(e.key==='ArrowRight'&&dx===0){dx=size;dy=0}
+});
+
+function draw(){
+ ctx.fillStyle=bgColor;
+ ctx.fillRect(0,0,canvas.width,canvas.height);
+
+ let head={x:snake[0].x+dx,y:snake[0].y+dy};
+
+ if(head.x<0||head.y<0||head.x>=canvas.width||head.y>=canvas.height||collision(head)){
+  running=false;
+  clearInterval(interval);
+  alert('Game Over');
+  return;
+ }
+
+ snake.unshift(head);
+
+ // APPLE FOOD
+ ctx.fillStyle='#e74c3c';
+ ctx.fillRect(food.x,food.y,size,size);
+ ctx.fillStyle='#2ecc71';
+ ctx.fillRect(food.x+size/2-2,food.y-6,4,6);
+
+ if(head.x===food.x&&head.y===food.y){
+  let cells=Math.floor(canvas.width/size);
+  food=randomFood(cells);
+ } else snake.pop();
+
+ snake.forEach((p,i)=>{
+  ctx.fillStyle=snakeColor;
+  ctx.fillRect(p.x,p.y,size,size);
+
+  if(i===0){
+   ctx.fillStyle='black';
+
+   let ex1,ex2,ey=p.y+size/3;
+
+   if(dx>0){ex1=p.x+size-8;ex2=p.x+size-8;}
+   else if(dx<0){ex1=p.x+4;ex2=p.x+4;}
+   else{ex1=p.x+4;ex2=p.x+size-8;}
+
+   ctx.fillRect(ex1,ey,3,3);
+   ctx.fillRect(ex2,ey+8,3,3);
+
+   ctx.strokeStyle='red';
+   ctx.beginPath();
+   if(dx>0){ctx.moveTo(p.x+size,p.y+size/2);ctx.lineTo(p.x+size+6,p.y+size/2);}
+   else if(dx<0){ctx.moveTo(p.x,p.y+size/2);ctx.lineTo(p.x-6,p.y+size/2);}
+   else if(dy>0){ctx.moveTo(p.x+size/2,p.y+size);ctx.lineTo(p.x+size/2,p.y+size+6);}
+   else{ctx.moveTo(p.x+size/2,p.y);ctx.lineTo(p.x+size/2,p.y-6);}
+   ctx.stroke();
+  }
+ });
+}
+
+function collision(h){return snake.some(p=>p.x===h.x&&p.y===h.y);}
+
+function toggleFullScreen(){
+ let el=document.getElementById('gameContainer');
+ if(!document.fullscreenElement) el.requestFullscreen();
+ else document.exitFullscreen();
+}
+</script>
+
+</body>
+</html>
